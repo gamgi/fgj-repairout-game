@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
 import backgroundImg from './assets/sky.png';
+import brickImg from './assets/brick.png';
 import paddleImg from './assets/paddle.png';
 import ballImg from './assets/ball.png';
 
+let bricks;
 let cursors;
 let paddle;
 let ball;
@@ -22,16 +24,28 @@ class Helpers {
 
     _ball.setVelocity(newVelocity.x, newVelocity.y);
   }
+
+  static hitBrick(_ball, _brick) {
+    // TODO
+  }
 }
 
 function preload() {
   this.load.image('background', backgroundImg);
+  this.load.image('brick', brickImg);
   this.load.image('paddle', paddleImg);
   this.load.image('ball', ballImg);
 }
 
 function create() {
   this.add.image(400, 300, 'background');
+  // Level
+  bricks = this.physics.add.staticGroup({ key: 'bricks' });
+  bricks
+    .create(0, 0, 'brick')
+    .setDisplaySize(50, 20)
+    .setOrigin(0, 0)
+    .refreshBody();
 
   // paddle
   paddle = this.physics.add.sprite(game.config.width / 2, 580, 'paddle');
@@ -48,6 +62,7 @@ function create() {
   ball.setCollideWorldBounds(true);
 
   this.physics.add.collider(ball, paddle, Helpers.hitBall, null, this);
+  this.physics.add.collider(ball, bricks, Helpers.hitBrick, null, this);
 
   // Input
   cursors = this.input.keyboard.createCursorKeys();
