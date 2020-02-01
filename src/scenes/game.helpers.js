@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+// import Phaser from 'phaser';
 
 // class Brick extends Phaser.GameObjects.Sprite {
 //   // constructor(...args) {
@@ -31,6 +31,7 @@ function addBrick(group, x, y, type) {
     .setOrigin(0, 0);
   brick.body.immovable = true;
   brick.hit = false;
+  brick.type = type;
   brick.body.friction = 0;
   brick.refreshBody();
   return brick;
