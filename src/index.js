@@ -3,6 +3,7 @@ import backgroundImg from './assets/sky.png';
 import brickImg from './assets/brick.png';
 import paddleImg from './assets/paddle.png';
 import ballImg from './assets/ball.png';
+import levels from './levels';
 
 let bricks;
 let cursors;
@@ -39,13 +40,16 @@ function preload() {
 
 function create() {
   this.add.image(400, 300, 'background');
-  // Level
-  bricks = this.physics.add.staticGroup({ key: 'bricks' });
-  bricks
-    .create(0, 0, 'brick')
-    .setDisplaySize(50, 20)
-    .setOrigin(0, 0)
-    .refreshBody();
+  // level
+  bricks = this.physics.add.staticGroup({ defaultKey: 'brick' });
+  levels[0].bricks.forEach(b => {
+    const [x, y, type] = b;
+    bricks
+      .create(x * 50, y * 20)
+      .setDisplaySize(50, 20)
+      .setOrigin(0, 0)
+      .refreshBody();
+  });
 
   // paddle
   paddle = this.physics.add.sprite(game.config.width / 2, 580, 'paddle');
