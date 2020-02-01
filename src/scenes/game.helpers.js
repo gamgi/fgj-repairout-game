@@ -1,20 +1,40 @@
-
 import Phaser from 'phaser';
 
-export default class Helpers {
-  static hitBall(_ball, _paddle) {
-    const ballPos = new Phaser.Math.Vector2(_ball.x, _ball.y);
-    const paddlePos = new Phaser.Math.Vector2(_paddle.x, _paddle.y);
+// class Brick extends Phaser.GameObjects.Sprite {
+//   // constructor(...args) {
+//   //   super(...args);
+//   constructor(scene, x, y, texture) {
+//     super(scene, x, y, texture);
+//     scene.sys.displayList.add(this);
+//     scene.sys.updateList.add(this);
+//     scene.sys.arcadePhysics.world.enableBody(this, 0);
+//     this._isHit = false;
+//   }
 
-    const newVelocity = ballPos
-      .subtract(paddlePos)
-      .normalize()
-      .scale(100);
+//   hit() {
+//     this._isHit = true;
+//   }
 
-    _ball.setVelocity(newVelocity.x, newVelocity.y);
-  }
-
-  static hitBrick(_ball, _brick) {
-    // TODO
-  }
+//   isHit() {
+//     return this._isHit;
+//   }
+// }
+function addBrick(group, x, y, type) {
+  // const brick = new Brick(this, x * 50, y * 50, 'invisibleBrick')
+  //   .setDisplaySize(48.2, 20)
+  //   .setDisplaySize(48.2, 20)
+  //   .setOrigin(0, 0);
+  // group.add(brick);
+  const brick = group
+    .create(x * 50, y * 20)
+    .setDisplaySize(48.2, 20)
+    .setOrigin(0, 0);
+  brick.body.immovable = true;
+  brick.hit = false;
+  brick.body.friction = 0;
+  brick.refreshBody();
+  return brick;
 }
+export default {
+  addBrick,
+};

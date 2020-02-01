@@ -1,83 +1,111 @@
-import { Scene } from 'phaser';
+import Phaser, { Scene } from 'phaser';
 import config from '../config';
 
 import backgroundImg from '../assets/sky.png';
 import brickImg from '../assets/brick.png';
+import invisibleBrickImg from '../assets/invisible.png';
 import paddleImg from '../assets/paddle.png';
 import ballImg from '../assets/ball.png';
 import levels from '../levels';
 import Helpers from './game.helpers';
 
-let bricks;
-let cursors;
-let paddle;
-let ball;
-let scoreText;
+function hitBrick(ball, brick) {
+  if (
+    ball.body.y > brick.body.y - brick.displayHeight &&
+    ball.body.velocity.y > 0 &&
+    brick.hit === false
+  ) {
+    // clear collision (naive)
+    ball.setY(brick.body.y - brick.displayHeight / 2 - ball.displayHeight / 2);
+    brick.setTexture('brick');
+
+    // enable collision
+    this.physics.add.collider(ball, brick);
+    brick.hit = true;
+  }
+}
+
+function hitBall(ball, paddle) {
+  const ballPos = new Phaser.Math.Vector2(ball.x, ball.y);
+  const paddlePos = new Phaser.Math.Vector2(paddle.x, paddle.y);
+
+  const newVelocity = ballPos
+    .subtract(paddlePos)
+    .normalize()
+    .scale(300);
+
+  ball.setVelocity(newVelocity.x, newVelocity.y);
+}
 
 export default class GameScene extends Scene {
   constructor() {
     super({ key: 'game' });
+    this.score = 0;
   }
 
   preload() {
     this.load.image('background', backgroundImg);
     this.load.image('brick', brickImg);
+    this.load.image('invisibleBrick', invisibleBrickImg);
     this.load.image('paddle', paddleImg);
     this.load.image('ball', ballImg);
   }
 
   create() {
     this.add.image(400, 300, 'background');
+
     // level
-    bricks = this.physics.add.staticGroup({ defaultKey: 'brick' });
-    levels[0].bricks.forEach(b => {
-      const [x, y, type] = b;
-      bricks
-        .create(x * 50, y * 20)
-        .setDisplaySize(50, 20)
-        .setOrigin(0, 0)
-        .refreshBody();
+    this.physics.world.setBoundsCollision(true, true, true, false);
+    const bricks = this.physics.add.staticGroup({
+      defaultKey: 'invisibleBrick',
     });
+    levels[0].bricks.forEach(b => Helpers.addBrick.apply(this, [bricks, ...b]));
 
     // paddle
-    paddle = this.physics.add.sprite(config.width / 2, 580, 'paddle');
-    paddle.setDisplaySize(120, 40);
-    paddle.setImmovable();
-    paddle.setCollideWorldBounds(true);
+    this.paddle = this.physics.add.sprite(config.width / 2 + 12, 580, 'paddle');
+    this.paddle
+      .setDisplaySize(120, 20)
+      .setImmovable()
+      .setCollideWorldBounds(true);
 
     // Ball
-    ball = this.physics.add.sprite(config.width / 2, 300, 'ball');
-    ball.setScale(0.1, 0.1);
-    ball.setCircle(200);
-    ball.setBounce(0.8);
-    ball.setVelocity(0, 100);
+    const ball = this.physics.add.sprite(config.width / 2, 400, 'ball');
+    ball.setDisplaySize(20, 20);
+    ball.setBounce(1);
+    ball.setVelocity(0, 300);
     ball.setCollideWorldBounds(true);
+    const updateScoreAndCollide = (...args) => {
+      hitBall(...args);
+      this.score += 1;
+    };
+    this.physics.add.collider(
+      ball,
+      this.paddle,
+      updateScoreAndCollide,
+      null,
+      this,
+    );
+    this.physics.add.overlap(ball, bricks, hitBrick, null, this);
 
-    this.physics.add.collider(ball, paddle, Helpers.hitBall, null, this);
-    this.physics.add.collider(ball, bricks, Helpers.hitBrick, null, this);
+    // input
+    this.cursors = this.input.keyboard.createCursorKeys();
 
-    // Input
-    cursors = this.input.keyboard.createCursorKeys();
-
-    scoreText = this.add.text(16, 16, '', {
-      fontSize: '32px',
+    this.scoreText = this.add.text(2, 2, '', {
+      fontSize: '16px',
       fill: '#000',
     });
   }
 
   update() {
-    // paddle input
-    if (cursors.left.isDown) {
-      paddle.setVelocityX(-160);
-    } else if (cursors.right.isDown) {
-      paddle.setVelocityX(160);
+    if (this.cursors.left.isDown) {
+      this.paddle.setVelocityX(-160);
+    } else if (this.cursors.right.isDown) {
+      this.paddle.setVelocityX(160);
     } else {
-      paddle.setVelocityX(0);
+      this.paddle.setVelocityX(0);
     }
-    if (cursors.up.isDown && paddle.body.touching.down) {
-      paddle.setVelocityY(-330);
-    }
+
     // score
-    scoreText.setText(`score: ${0}`);
+    this.scoreText.setText(`score: ${this.score}`);
   }
 }
